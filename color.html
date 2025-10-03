@@ -6,6 +6,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#667eea">
+<meta name="description" content="Calculate 24-bit color complements instantly">
+<link rel="manifest" href="#" id="manifest-placeholder">
 <title>Color Complement</title>
 <style>
   * {
@@ -223,6 +225,64 @@
 <div class="toast" id="toast">✅ Copied!</div>
 
 <script>
+// PWA Manifest
+const manifest = {
+  "name": "Color Complement Calculator",
+  "short_name": "ColorComp",
+  "description": "Calculate 24-bit color complements instantly",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#667eea",
+  "theme_color": "#667eea",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+};
+
+const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+const manifestURL = URL.createObjectURL(manifestBlob);
+document.getElementById('manifest-placeholder').setAttribute('href', manifestURL);
+
+// Service Worker Registration
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    const swCode = `
+      self.addEventListener('install', (e) => {
+        e.waitUntil(
+          caches.open('color-v1').then((cache) => {
+            return cache.addAll(['./', './icon.jpg']);
+          })
+        );
+      });
+      
+      self.addEventListener('fetch', (e) => {
+        e.respondWith(
+          caches.match(e.request).then((response) => {
+            return response || fetch(e.request);
+          })
+        );
+      });
+    `;
+    
+    const blob = new Blob([swCode], { type: 'application/javascript' });
+    const swURL = URL.createObjectURL(blob);
+    
+    navigator.serviceWorker.register(swURL);
+  });
+}
+
 const hexTable = {
   "0":"f","1":"e","2":"d","3":"c","4":"b","5":"a",
   "6":"9","7":"8","8":"7","9":"6","a":"5","b":"4",
